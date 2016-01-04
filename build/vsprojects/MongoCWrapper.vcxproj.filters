@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Wrapper">
+      <UniqueIdentifier>{cfa8bd1a-1a90-49f9-912d-2d15def9bd72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test">
+      <UniqueIdentifier>{03ddd587-8adf-499b-99c1-14959fed80d2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\mfcafx.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mfcnew.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoAuto.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongocHelp.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoClient.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TestFunc.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\Student.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\StudentAccess.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\AccessBase.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\Teacher.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TeacherAccess.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoDecp.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\MongoAuto.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongocHelp.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongoClient.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\testMain.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TestFunc.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\Student.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\StudentAccess.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\Teacher.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TeacherAccess.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongoDecp.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\docs\readme.txt" />
+  </ItemGroup>
+</Project>

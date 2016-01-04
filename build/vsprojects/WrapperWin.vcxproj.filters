@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Test">
+      <UniqueIdentifier>{d0f35e15-7ed8-4d35-8f8c-022cf6ffc168}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Wrapper">
+      <UniqueIdentifier>{35cc5d03-400b-45bf-8032-c495fc02216b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\MongocHelp.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoClient.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoAuto.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\Teacher.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TeacherAccess.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TestFunc.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MongoObs.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TestObs.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mfcafx.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mfcnew.h">
+      <Filter>Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\AccessBase.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\Account.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\MongoClient.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongoAuto.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongocHelp.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TeacherAccess.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TestFunc.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\Teacher.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\winMain.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MongoObs.cpp">
+      <Filter>Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TestObs.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\AccessBase.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\docs\readme.txt" />
+  </ItemGroup>
+</Project>
