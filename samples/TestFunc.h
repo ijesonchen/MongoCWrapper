@@ -18,15 +18,6 @@ extern const wchar_t* wszSrv;
 extern const wchar_t* wszDb;
 
 
-inline void Trap(void* p = nullptr)
-{
-	if (p)
-	{
-		return;
-	}
-	std::wcout << L"trapped!" << std::endl;
-	exit(-1);
-}
 
 
 void TestIndex(void);
@@ -50,6 +41,20 @@ void TestAnsi(void);
 
 void TestBulk(void);
 
+void TestCombinUnique(void);
+
+void TestBigDoc(void);
+
+inline void Trap(void* p = nullptr)
+{
+	if (p)
+	{
+		return;
+	}
+	std::wcout << L"trapped!" << std::endl;
+	exit(-1);
+}
+
 inline void TestMongo(void)
 {
 	if (MongoClib::Init(wszSrv, wszDb, szLoc, 2000))
@@ -65,6 +70,8 @@ inline void TestMongo(void)
 	TestStudent();
 	TestTeacher();
 	TestBulk();
+	TestCombinUnique();
+	TestBigDoc();
 
 	MongoClib::Cleanup();
 	std::cout << std::endl;

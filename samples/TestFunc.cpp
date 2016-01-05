@@ -781,3 +781,88 @@ void TestBulk(void)
 
 	cout << "**** Bulk test passed." << endl;
 }
+
+void TestCombinUnique(void)
+{
+	std::string collName("TUnique");
+	AutoPoolColl coll(collName);
+	AutoBson key;
+	key.Add("name", 1);
+	key.Add("tag", 1);
+	if (!coll.CreateIndex(key, true))
+	{
+		Trap();
+	}
+
+	AutoBson doc1;
+	doc1.Add("name", "name1");
+	doc1.Add("tag", 1);
+
+	if (!coll.Insert(doc1))
+	{
+		Trap();
+	}
+
+	AutoBson doc2;
+	doc2.Add("name", "name1");
+	doc2.Add("tag", 2);
+
+	if (!coll.Insert(doc2))
+	{
+		Trap();
+	}
+	
+	AutoBson doc3;
+	doc3.Add("name", "name1");
+	doc3.Add("tag", 1);
+
+	if (coll.Insert(doc3))
+	{
+		Trap();
+	}
+
+}
+
+
+void TestBigDoc(void)
+{
+	string strColl("testbig");
+	unsigned nLen = 20 * 1024 * 1024;
+
+	unique_ptr<char, default_delete<char[]>> up(new char[nLen]);
+
+
+	memset(up.get(), 0x5a, nLen);
+
+	string bin(up.get(), nLen);
+	if (bin.length() != nLen)
+	{
+		Trap();
+	}
+		
+	AutoBson doc;
+	doc.Add("name", "test");
+	doc.AddBin("bin", bin);
+
+	AutoPoolColl coll(strColl);
+
+	if (!coll.Insert(doc))
+	{
+		cout << "insert failed: " << coll.Error() << endl;
+	}
+
+	AutoBson query;
+	AutoCursor cursor(strColl, query);
+
+	while (cursor.Next())
+	{
+		string name = cursor.Str("name");
+		string data = cursor.Bin("bin");
+		if (data != bin)
+		{
+			Trap();
+		}
+	}
+
+	cout << "**** TestBigDoc finished " << endl;
+}

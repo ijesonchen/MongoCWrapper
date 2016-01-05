@@ -24,8 +24,8 @@ namespace MongoClib
 	class AutoUri;
 
 	// template wrapper for bson_t* / const bson_t*
-// 	template<typename BsonT>
-// 	class BsonParser;
+	template<typename BsonT>
+	class BsonParser;
 
 	// wrapper for bson_t*
 	class AutoBson;
@@ -127,11 +127,7 @@ namespace MongoClib
 		CString CMessage(void) const;
 #endif // __AFXSTR_H__
 	};
-
-	extern template class BsonParser < bson_t > ;
-	extern template class BsonParser < const bson_t > ;
-
-
+		
 	class AutoBson : public BsonParser<bson_t>
 	{
 		AutoBson(AutoBson& rhs) = delete;
