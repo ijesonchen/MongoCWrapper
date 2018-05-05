@@ -23,6 +23,8 @@ namespace MongoClib
 	// wrapper for mongoc_uri_t*
 	class AutoUri;
 
+	class AutoOid;
+
 	// template wrapper for bson_t* / const bson_t*
 	template<typename BsonT>
 	class BsonParser;
@@ -72,6 +74,35 @@ namespace MongoClib
 	};
 
 	//////////////////////////////////////////////////////////////////////////
+	// class AutoOid
+	class AutoOid
+	{
+	public:
+		AutoOid() { Init(); };
+		~AutoOid(){};
+
+		AutoOid(const time_t tm) { FromTime(tm); };
+
+		void FromTime(const time_t tm);
+
+		time_t ToTime(void) const 
+			{ bson_oid_get_time_t(&oid); }
+
+		std::string ToString(void) const;
+
+		std::string HexTimeString(void) const
+			{ return ToString().substr(0, 8); }
+
+		operator const bson_oid_t* () const
+			{ return &oid; }
+	private:
+		bson_oid_t oid;
+		void Init(void)
+			{ memset(&oid, 0, sizeof(oid)); }
+	};
+
+
+	//////////////////////////////////////////////////////////////////////////
 	// class BsonBase
 	template<typename BsonT>
 	class BsonParser
@@ -82,16 +113,18 @@ namespace MongoClib
 
 		//////////////////////////////////////////////////////////////////////////
 		// parser
-		bool Bool(const std::string& key) const;
-		int Int32(const std::string& key) const;
-		long long Int64(const std::string& key) const;
-		double Double(const std::string& key) const;
-		std::string Str(const std::string& key) const;
-		std::wstring WStr(const std::string& key) const;
-		std::string Bin(const std::string& key) const;
-		AutoBson Doc(const std::string& key) const;
-		std::string Oid(const std::string& key = "_id") const;
-		time_t OidTime(const std::string& key = "_id") const;
+		bool HasKey(const std::string&key) const;
+		bool Bool(const std::string& key, bool setFail = true) const;
+		int Int32(const std::string& key, bool setFail = true) const;
+		long long Int64(const std::string& key, bool setFail = true) const;
+		time_t Timet(const std::string& key, bool setFail = true) const;
+		double Double(const std::string& key, bool setFail = true) const;
+		std::string Str(const std::string& key, bool setFail = true) const;
+		std::wstring WStr(const std::string& key, bool setFail = true) const;
+		std::string Bin(const std::string& key, bool setFail = true) const;
+		AutoBson Doc(const std::string& key, bool setFail = true) const;
+		std::string Oid(const std::string& key = "_id", bool setFail = true) const;
+		time_t OidTime(const std::string& key = "_id", bool setFail = true) const;
 
 		// get string array (in back_inserter supported container) from bson
 		template<typename Container, typename TransFunc>
@@ -101,7 +134,7 @@ namespace MongoClib
 		};
 
 #ifdef __AFXSTR_H__
-		CString CStr(const std::string& key) const;
+		CString CStr(const std::string& key, bool setFail = true) const;
 		std::vector<CString> GetVecCStr(const std::string& key) const;
 #endif // __AFXSTR_H__
 
@@ -114,7 +147,7 @@ namespace MongoClib
 	public:
 		bool IsValid(void);
 
-		bool CheckCall(bool bRet) const;
+		bool CheckCall(bool bRet, bool setFail = true) const;
 
 		bool CheckParam(const void* pParam);
 
@@ -130,13 +163,16 @@ namespace MongoClib
 		
 	class AutoBson : public BsonParser<bson_t>
 	{
-		AutoBson(AutoBson& rhs) = delete;
-		AutoBson& operator=(AutoBson& rhs) = delete;
 	public:
 		AutoBson();
+		AutoBson(const std::string& json);
 		AutoBson(bson_t* p);
+		AutoBson(const bson_t& d);
 		virtual ~AutoBson();
 
+		// copy
+		AutoBson(AutoBson& rhs) : AutoBson(*rhs) {};
+		AutoBson& operator=(AutoBson& rhs);
 		// move ctor & assign for BuildBson
 		AutoBson(AutoBson&& rhs);
 		AutoBson& operator=(AutoBson&& rhs);
@@ -152,9 +188,24 @@ namespace MongoClib
 		bool Add(const std::string& key, const std::string& val);
 		bool Add(const std::string& key, const char* val);
 		bool Add(const std::string& key, const std::wstring& val);
+		bool Add(const std::string& key, const bson_oid_t* val);
+		bool AddTime(const std::string& key);
+		bool AddTime(const std::string& key, time_t val);
 		bool AddBin(const std::string& key, const std::string& val);
 		bool AddDoc(const std::string& key, const bson_t* sub);
 		bool AddArray(const std::string& key, const bson_t* sub);
+
+		// add sub doc key-val to bson
+		template<typename T>
+		inline bool AddSub(const std::string& key, const std::string& subkey, const T& subval)
+		{
+			AutoBson subdoc;
+			if (!subdoc.Add(subkey, subval))
+			{
+				return false;
+			}
+			return AddDoc(key, subdoc);
+		}
 
 		// add string container to bson
 		template<typename Container, typename TransFunc>
@@ -184,9 +235,37 @@ namespace MongoClib
 		ArrayBuilder();
 		~ArrayBuilder();
 
-		bool AddSub(const bson_t* sub);
+		// according to builder::Add functions
+		template<class T>
+		bool ArrAdd(const T& val)
+			{ return Add(U32toString(++idx), val); };
+		bool ArrAddTime(void)
+			{ return AddTime(U32toString(++idx)); }
+		bool ArrAddTime(time_t val)
+			{ return AddTime(U32toString(++idx), val); }
+		bool ArrAddBin(const std::string& val)
+			{ return AddBin(U32toString(++idx), val); }
+		bool ArrAddDoc(const bson_t* sub)
+			{ return AddDoc(U32toString(++idx), sub); }
+		bool ArrAddArr(const bson_t* sub)
+			{ return AddArray(U32toString(++idx), sub); }
+
+
+		// deprecated. try rename to ArrAddSub
+		bool AddSub(const bson_t* sub)
+			{ return AddDoc(U32toString(++idx), sub); }
+
+		// deprecated. try rename to ArrAdd
+		// with complex data, build bson & use Set(const AutoBson&)  
+		template<class T>
+		bool AddVal(const T& val)
+		{
+			return Add(U32toString(++idx), val);
+		};
+
+
 	private:
-		unsigned long long idx = static_cast<unsigned long long >(- 1);
+		uint32_t idx = static_cast<uint32_t>(- 1);
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -195,28 +274,100 @@ namespace MongoClib
 	class BsonCmd : public AutoBson
 	{
 		BsonCmd(BsonCmd& rhs) = delete;
-		BsonCmd(BsonCmd&& rhs) = delete;
 		BsonCmd& operator = (BsonCmd& rhs) = delete;
-		BsonCmd& operator = (BsonCmd&& rhs) = delete;
-
+		
 	public:
+		enum CmdType
+		{
+			CTcmp = 0,
+			CTeq,
+			CTgt,
+			CTgte,
+			CTlt,
+			CTlte,
+			CTne,
+			CTand,
+			CTor
+		};
+
 		BsonCmd();
+		BsonCmd(BsonCmd&& rhs);
+		BsonCmd& operator = (BsonCmd&& rhs);
 
 		// $inc $mul $rename $setOnInsert $set $unset $min $max $currentDate
 		bool Cmd(const std::string& cmd, const AutoBson& cond);
+		bool Exists(const std::string& key, bool bExists = true);
+		bool BitAnd(const std::string& key, int val);
+		bool BitOr(const std::string& key, int val);
+		bool BitXor(const std::string& key, int val);
 		bool Query(const AutoBson& cond);
 		bool Sort(const AutoBson& cond);
 		bool Sort(const std::string& key, bool bDesc = true);		
 		bool Set(const AutoBson& cond);
+		bool SetArray(const std::string& key, const AutoBson& cond);
+		bool SetTime(const std::string& key);
+		bool SetTime(const std::string& key, time_t val);
+		bool AndOr(const CmdType type, const AutoBson& cond1, const AutoBson& cond2);
 
+		bool CompTime(const std::string& key, const CmdType type, time_t val);
+		template<class T>
+		bool Comp(const std::string& key, const CmdType type, const T& val)
+		{
+			std::string cmd = CompStr(type);
+			if (cmd.empty())
+			{
+				return false;
+			}
+			AutoBson cond;
+			cond.Add(cmd, val);
+			return AddDoc(key, cond);
+		};
+
+		bool CompOidTime(const std::string& key, const CmdType type, time_t val)
+			{ return Comp(key, type, AutoOid(val)); }
+		
 		// with complex data, build bson & use Set(const AutoBson&)
 		template<class T>
-		bool Set(const std::string& key, T& val)
+		bool Set(const std::string& key, const T& val)
 		{
 			AutoBson cond;
 			cond.Add(key, val);
 			return AddDoc("$set", cond);
 		};
+
+		// see Set for reference
+		template<class T>
+		bool ArrayAppend(const std::string& key, const T& val)
+		{
+			AutoBson cond;
+			cond.Add(key, val);
+			return AddDoc(cmdStr.push, cond);
+		};
+		template<class T>
+		bool ArrayAppendUnique(const std::string& key, const T& val)
+		{
+			AutoBson cond;
+			cond.Add(key, val);
+			return AddDoc(cmdStr.push, cond);
+		};
+
+	private:
+		std::string CompStr(CmdType nComp);		
+		struct CmdStr 
+		{
+			// see https://docs.mongodb.com/manual/reference/operator/
+			const std::string query = "$query";
+			const std::string orderby = "$orderby";
+			const std::string set = "$set";
+			const std::string exists = "$exists";
+			const std::string bit = "$bit";
+			// append to set. allow repeat element
+			const std::string push = "$push";
+			// append to set. if repeat elem, skip.
+			const std::string addToSet = "$addToSet";
+		};
+
+		CmdStr cmdStr;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -355,6 +506,8 @@ namespace MongoClib
 
 		operator mongoc_collection_t* ();
 
+		bool Rename(const std::string& newName, bool drop_target_before_rename = false);
+
 		bool Insert(const bson_t* doc, mongoc_insert_flags_t flags = MONGOC_INSERT_NONE);
 		bool Delete(const bson_t* query, mongoc_remove_flags_t flags = MONGOC_REMOVE_NONE);
 		// return true if record not exist but no DB operation failure
@@ -372,9 +525,27 @@ namespace MongoClib
 		bool CreateIndex(const bson_t* indices, bool bUnique = false);
 		bool CreateIndex(const std::string& field, bool bUnique = false, bool bAsc = true);
 		bool CreateUniqueIndex(const std::string& field, bool bAsc = true);
+		bool CreateExpireIndex(const std::string& field, int expireSec);
+
+		template <typename... Args>
+		bool CreateIndex(AutoBson& bsonKeys, bool bUnique, const std::string& field, int nOrder, const Args& ... rest)
+		{
+			bsonKeys.Add(field, nOrder);
+			return CreateIndex(bsonKeys, bUnique, rest...);
+		}
+		template <typename... Args>
+		bool CreateIndex(bool bUnique, const std::string& field, int nOrder, const Args& ... rest)
+		{
+			AutoBson bsonKeys;
+			bsonKeys.Add(field, nOrder);
+			return CreateIndex(bsonKeys, bUnique, rest...);
+		}
 		
 		const std::string Error(void) const;
-		std::wstring WError(void) const;
+		std::wstring WError(void) const {	return DecUtf8(Error()); };
+
+		std::int32_t EDomain(void) const { return m_err.domain; }
+		std::int32_t ECode(void) const { return m_err.code; }
 
 		void Release(mongoc_client_t*& client, mongoc_collection_t*& coll);
 
@@ -387,7 +558,7 @@ namespace MongoClib
 	private:
 		mongoc_client_t* m_client = nullptr;
 		mongoc_collection_t* m_coll = nullptr;
-		bson_error_t m_err;
+		bson_error_t m_err = {};
 
 		void Destroy(void);
 		void SetErr(const std::string& str);
@@ -419,6 +590,8 @@ namespace MongoClib
 		int nModified(void) const;
 		int nRemoved(void) const;
 		int nUpserted(void) const;
+		uint32_t nEDomain(void) const;
+		uint32_t nECode(void) const;
 		std::string writeErrors(void) const;
 		std::string writeConcernErrors(void) const;
 
@@ -433,6 +606,7 @@ namespace MongoClib
 		AutoPoolColl m_pollColl;
 		mongoc_bulk_operation_t* m_bulk = nullptr;
 		StackBson m_reply;
+		bson_error_t m_err = {};
 		std::string m_errString;
 	};
 

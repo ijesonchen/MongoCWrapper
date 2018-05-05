@@ -13,6 +13,33 @@ using namespace std;
 
 namespace MongoClib
 {
+
+#ifdef _MSC_VER
+	#pragma warning(disable: 4996)
+#endif
+
+	std::string Timet2String(time_t tm)
+	{
+		auto tmStru = localtime(&tm);
+		const auto bufLen = 80;
+		char buffer[bufLen];
+		strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", tmStru);
+		buffer[bufLen - 1] = 0;
+		return buffer;
+	}
+
+	std::string U32toString(const std::uint32_t n)
+	{
+		char str[16];
+		const char *res;
+		bson_uint32_to_string(n, &res, str, sizeof(str));
+		return res;
+	}
+
+#ifdef _MSC_VER
+	#pragma warning(default :4996)
+#endif
+
 	// Return length of string. Must be NULL terminated.
 	// If length >= 1G, return -1; terminate NULL not counted
 	template <typename T>
@@ -260,7 +287,7 @@ namespace MongoClib
 	std::string EncUtf8(const std::wstring& strUnicode)
 	{
 		const wchar_t* pw = strUnicode.c_str();
-		int nUnicode = strUnicode.length();
+		int nUnicode = static_cast<int>(strUnicode.length());
 		int nUtf8 = UnicodeToUtf8(pw, nUnicode, NULL, 0);
 		if (nUtf8 <= 0)
 		{
@@ -282,7 +309,7 @@ namespace MongoClib
 	std::wstring DecUtf8(const std::string& strUtf8)
 	{
 		const char* p = strUtf8.c_str();
-		int nUtf8 = strUtf8.length();
+		int nUtf8 = static_cast<int>(strUtf8.length());
 		int nUnicode = Utf8ToUnicode(p, nUtf8, NULL, 0);
 		if (nUnicode <= 0)
 		{
@@ -304,22 +331,25 @@ namespace MongoClib
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4996)
-#endif // _MSC_VER
-
+	
+	// wcstombs/mbstowcs is global locale related. wcstombs_l is system dependent. with Linux, try iconv
+	// wstring_convert use codecvt, which g++ not support (should use clang)
 	std::string EncAnsi(const std::wstring& strUnicode)
 	{
 		const wchar_t* pUnicode = strUnicode.c_str();
-		size_t len = wcstombs(nullptr, pUnicode, 0) + 1;
-		if (len == (size_t)-1)
+		auto len = WideCharToMultiByte(CP_ACP, 0, pUnicode, (int)strUnicode.length(), nullptr, 0, nullptr, nullptr);
+		if (!len)
 		{
 			return "";
 		}
-		char* ap = new char[len];
+		char* ap = new char[len + 1];
 		std::unique_ptr<char> aup(ap);
 		ap[0] = 0;
 		ap[len - 1] = 0;
+		ap[len] = 0;
 
-		len = wcstombs(ap, pUnicode, len);
+
+		len = WideCharToMultiByte(CP_ACP, 0, pUnicode, (int)strUnicode.length(), ap, len, nullptr, nullptr);
 
 		if (len == (size_t)-1)
 		{
@@ -331,23 +361,27 @@ namespace MongoClib
 	std::wstring DecAnsi(const std::string& strAnsi)
 	{
 		const char* pAnsi = strAnsi.c_str();
-		size_t len = mbstowcs(nullptr, pAnsi, 0) + 1;
-		if (len == (size_t)-1)
+		auto len = MultiByteToWideChar(CP_ACP, 0, pAnsi, (int)strAnsi.length(), nullptr, 0);
+
+		if (!len)
 		{
 			return L"";
 		}
-		wchar_t* wp = new wchar_t[len];
+		wchar_t* wp = new wchar_t[len + 1];
 		std::unique_ptr<wchar_t> wup(wp);
 		wp[0] = 0;
 		wp[len - 1] = 0;
+		wp[len] = 0;
 
-		len = mbstowcs(wp, pAnsi, len);
-		if (len == (size_t)-1)
+		len = MultiByteToWideChar(CP_ACP, 0, pAnsi, (int)strAnsi.length(), wp, len);
+
+		if (!len)
 		{
 			return L"";
 		}
 		return wp;
 	}
+#endif // _MSC_VER
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -355,6 +389,19 @@ namespace MongoClib
 	
 	//////////////////////////////////////////////////////////////////////////
 	// bson parser functions
+	bool BsonHasKey(const bson_t* doc, const std::string& key, bool& val)
+	{
+		if (!doc) return false;
+
+		bson_iter_t iter;
+		if (bson_iter_init(&iter, doc))
+		{
+			val = bson_iter_find_case(&iter, key.c_str());
+			return true;
+		}
+		return false;
+	}
+
 	bool BsonKeyIter(const bson_t* doc, const std::string& key, bson_iter_t& ival)
 	{
 		if (!doc) return false;
@@ -516,6 +563,20 @@ namespace MongoClib
 		return false;
 	}
 
+	bool BsonValueTimet(const bson_t* doc, const std::string& key, time_t& val)
+	{
+		if (!doc) return false;
+
+		bson_iter_t ival;
+
+		if (BsonKeyIter(doc, key, ival) && BSON_ITER_HOLDS_DATE_TIME(&ival))
+		{
+			val = bson_iter_time_t(&ival);
+			return true;
+		}
+		return false;
+	}
+
 	bool BsonValueBin(const bson_t* doc, const std::string& key, std::string& val)
 	{
 		if (!doc) return false;
@@ -603,4 +664,38 @@ namespace MongoClib
 		return std::move(val);
 	}
 	
+	std::tuple<std::vector<AutoBson>, std::string>
+		ReadJsonFile(const std::string& jsonFileName)
+	{
+		std::vector<AutoBson> v;
+		string s;
+		ReadJsonFile(jsonFileName, v, s);
+		return std::make_tuple(std::move(v), s);
+	}
+	
+	std::tuple<AutoBson, std::string>
+		ReadJsonFileFirst(const std::string& jsonFileName)
+	{
+		std::vector<AutoBson> v;
+		std::string s;
+		std::tie(v, s) = ReadJsonFile(jsonFileName);
+		if (v.empty())
+		{
+			return make_tuple(std::move(AutoBson()), s);
+		}
+		return make_tuple(std::move(v.front()), s);
+	}
+
+	std::tuple<AutoBson, std::string>
+		ReadJsonFileLast(const std::string& jsonFileName)
+	{
+		std::vector<AutoBson> v;
+		std::string s;
+		std::tie(v, s) = ReadJsonFile(jsonFileName);
+		if (v.empty())
+		{
+			return make_tuple(std::move(AutoBson()), s);
+		}
+		return make_tuple(std::move(v.back()), s);
+	}
 } // MongoClib

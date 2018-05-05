@@ -37,7 +37,7 @@ extern void Trap(void* p = nullptr);
 
 void TestObs(void)
 {
-	if (Init(wszSrv, wszDb, szLoc, 2000))
+	if (Init(wszSrv, wszDb, 2000))
 	{
 		Trap();
 	}

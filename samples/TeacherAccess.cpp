@@ -139,6 +139,28 @@ bool TeacherAccess::CreateIndexsNoUnique(void)
 	return true;
 }
 
+bool TeacherAccess::CreateComplexIndexs(void)
+{
+	AutoPoolColl coll(m_collname);
+	if (!coll.CreateIndex("idx")) return false;
+	if (!coll.CreateIndex("group")) return false;
+	if (!coll.CreateIndex("name")) return false;
+
+	if (!coll.CreateIndex(false, "idx", 1, "group", 1, "name", -1)) return false;
+
+// 	AutoBson keys;
+// 	keys.Add("idx", 1);
+// 	keys.Add("group", 1);
+// 	keys.Add("name", -1);
+// 
+// 	if (!coll.CreateIndex(keys))
+// 	{
+// 		return false;
+// 	}
+
+	return true;
+}
+
 template<typename Container>
 bool TeacherAccess::Insert(const Container& cntr)
 {
@@ -148,11 +170,62 @@ bool TeacherAccess::Insert(const Container& cntr)
 		return false;
 	}
 
-	for (auto it : cntr)
+	for (auto& it : cntr)
 	{
 		AutoBson doc = BuildBson(it);
 		bulk.Insert(doc);
 	}
+	
+	auto nRet = bulk.Execute();
+	if (!nRet)
+	{
+		cout << "Bulk error: " << bulk.Error();
+		return false;
+	}
+	cout << "Inserted: " << bulk.nInserted() << endl;
+	return true;
+}
+
+extern const char* szLoc;
+
+template<typename Container>
+bool TeacherAccess::Insert2(const Container& cntr)
+{
+	Timer timer;
+	locale loc(szLoc);
+	cout.imbue(loc);
+
+	timer.Tick();
+
+	BulkOperator bulk(m_collname);
+	if (!bulk.IsValid())
+	{
+		return false;
+	}
+	
+	cout << "BulkOperator prepare " << timer.Tock() << endl;
+	timer.Tick();
+
+
+	vector<AutoBson> vtdoc;
+	vtdoc.reserve(cntr.size());
+
+	for (auto& it : cntr)
+	{
+		vtdoc.push_back(BuildBson(it));
+	}
+
+	cout << "BulkOperator BuildBson " << timer.Tock() << endl;
+	timer.Tick();
+
+
+	for (auto& it : vtdoc)
+	{
+		bulk.Insert(it);
+	}
+
+	cout << "BulkOperator Insert " << timer.Tock() << endl;
+	timer.Tick();
 
 	auto nRet = bulk.Execute();
 	if (!nRet)
@@ -160,6 +233,10 @@ bool TeacherAccess::Insert(const Container& cntr)
 		cout << "Bulk error: " << bulk.Error();
 		return false;
 	}
+
+	cout << "BulkOperator Execute " << timer.Tock() << endl;
+	timer.Tick();
+
 	cout << "Inserted: " << bulk.nInserted() << endl;
 	return true;
 }
@@ -173,6 +250,14 @@ bool TeacherAccess::Insert(const std::vector<Teacher>& cntr);
 template 
 bool TeacherAccess::Insert(const std::list<Teacher>& cntr);
 
+template
+bool TeacherAccess::Insert2(const std::deque<Teacher>& cntr);
+
+template
+bool TeacherAccess::Insert2(const std::vector<Teacher>& cntr);
+
+template
+bool TeacherAccess::Insert2(const std::list<Teacher>& cntr);
 
 bool TeacherAccess::Delete(const std::deque<Teacher>& dqObjects)
 {
@@ -199,6 +284,12 @@ bool TeacherAccess::Delete(const std::deque<Teacher>& dqObjects)
 	return true;
 }
 
+
+bool TeacherAccess::DeleteAll(void)
+{
+	AutoBson query;
+	return Remove(query);
+}
 
 bool TeacherAccess::Update(const std::deque<Teacher>& dqObjects)
 {

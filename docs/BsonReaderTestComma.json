@@ -1,0 +1,6 @@
+{
+	"mongoaddr":"192.168.13.238",
+	"mongocoll":"sid230",
+	"sidModelPath":".\\sidMod",
+	"resPath":".",
+}

@@ -78,6 +78,7 @@ protected:
 			objects.emplace_back();
 			if (!ParseBson(objects.back(), cursor))
 			{
+				objects.pop_back();
 				return false;
 			}
 		}
@@ -178,6 +179,17 @@ public:
 			LogError(L"Count", coll.WError());
 		}
 		return cnt;
+	}
+
+	bool Rename(const std::string newCollName)
+	{
+		AutoPoolColl coll(m_collname);
+		if (!coll.Rename(newCollName))
+		{
+			LogError(L"Rename", coll.WError());
+			return false;
+		}
+		return true;
 	}
 
 	template <typename Container>

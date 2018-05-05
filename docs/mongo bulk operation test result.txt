@@ -1,0 +1,176 @@
+x64 rel
+
+cntr assign cost (us): 33,001
+cntr push cost (us): 32,001
+Inserted: 50,000
+bulk inserter2 cost (us): 5,067,289
+nModified: 0
+bulk Update cost (us): 4,169,238
+ResetName cost (us): 2,277,130
+nModified: 50,000
+bulk Replace cost (us): 7,377,107
+nRemoved: 50,000
+bulk Delete cost (us): 5,616,009
+single insert cost (us): 40,326,070
+single delete cost (us): 27,253,247
+**** Bulk test passed.
+
+
+x32 rel
+
+cntr assign cost (us): 31,200
+cntr push cost (us): 46,800
+Inserted: 50,000
+bulk inserter2 cost (us): 5,522,409
+nModified: 0
+bulk Update cost (us): 4,305,607
+ResetName cost (us): 2,589,604
+nModified: 50,000
+bulk Replace cost (us): 7,909,213
+nRemoved: 50,000
+bulk Delete cost (us): 6,068,410
+single insert cost (us): 44,631,678
+single delete cost (us): 28,329,649
+**** Bulk test passed.
+
+x64 rel
+test count 1000000
+cntr assign cost (us): 657,037
+cntr push cost (us): 723,041
+Inserted: 1,000,000
+bulk inserter2 cost (us): 111,395,079
+ResetName cost (us): 43,508,476
+nModified: 877,000
+bulk Update cost (us): 125,455,420
+ResetName cost (us): 39,249,668
+nModified: 877,000
+bulk Replace cost (us): 139,901,045
+nRemoved: 877,000
+bulk Delete cost (us): 113,053,398
+single insert cost (us): 858,625,508
+single delete cost (us): 600,833,087
+**** Bulk test passed.
+
+x64 rel
+test count 100000
+cntr assign cost (us): 66,003
+cntr push cost (us): 66,003
+Inserted: 100,000
+bulk inserter2 cost (us): 9,925,567
+ResetName cost (us): 3,959,226
+nModified: 100,000
+bulk Update cost (us): 12,445,711
+ResetName cost (us): 3,872,221
+nModified: 100,000
+bulk Replace cost (us): 15,663,895
+nRemoved: 100,000
+bulk Delete cost (us): 10,902,623
+single insert cost (us): 75,466,316
+single delete cost (us): 55,933,199
+**** Bulk test passed.
+
+
+************************************************
+x64 rel 2 thread
+test count 100000
+cntr assign cost (us): 70,004
+cntr push cost (us): 67,003
+Inserted: 100,000
+bulk inserter2 cost (us): 13,323,762
+ResetName cost (us): 10,351,592
+nModified: 79,000
+bulk Update cost (us): 26,455,513
+ResetName cost (us): 6,760,386
+nModified: 100,000
+bulk Replace cost (us): 30,870,765
+nRemoved: 100,000
+bulk Delete cost (us): 31,227,786
+single insert cost (us): 74,841,280
+single delete cost (us): 61,056,492
+**** Bulk test passed.
+
+test count 100000
+cntr assign cost (us): 65,003
+cntr push cost (us): 68,003
+Inserted: 100,000
+bulk inserter2 cost (us): 12,721,727
+ResetName cost (us): 10,355,592
+nModified: 21,000
+bulk Update cost (us): 26,211,499
+ResetName cost (us): 6,981,399
+nModified: 100,000
+bulk Replace cost (us): 30,885,766
+nRemoved: 100,000
+bulk Delete cost (us): 31,231,786
+single insert cost (us): 74,747,275
+single delete cost (us): 61,153,497
+**** Bulk test passed.
+
+
+***********************************
+x64 rel 4 thread
+test count 100000
+cntr assign cost (us): 62,400
+cntr push cost (us): 78,000
+Inserted: 100,000
+bulk inserter2 cost (us): 23,868,041
+ResetName cost (us): 22,542,404
+nModified: 100,000
+bulk Update cost (us): 58,932,904
+ResetName cost (us): 10,906,019
+nModified: 100,000
+bulk Replace cost (us): 70,212,537
+nRemoved: 100,000
+bulk Delete cost (us): 79,691,190
+single insert cost (us): 80,369,367
+single delete cost (us): 81,884,173
+**** Bulk test passed.
+test count 100000
+cntr assign cost (us): 62,400
+cntr push cost (us): 78,000
+Inserted: 100,000
+bulk inserter2 cost (us): 23,431,241
+ResetName cost (us): 20,286,047
+nModified: 0
+bulk Update cost (us): 59,868,906
+ResetName cost (us): 10,219,618
+nModified: 100,000
+bulk Replace cost (us): 69,713,337
+nRemoved: 100,000
+bulk Delete cost (us): 79,737,990
+single insert cost (us): 80,556,567
+single delete cost (us): 81,587,772
+**** Bulk test passed.
+test count 100000
+cntr assign cost (us): 78,000
+cntr push cost (us): 78,000
+Inserted: 100,000
+bulk inserter2 cost (us): 17,409,630
+ResetName cost (us): 21,336,719
+nModified: 0
+bulk Update cost (us): 60,087,306
+ResetName cost (us): 10,219,618
+nModified: 100,000
+bulk Replace cost (us): 69,713,337
+nRemoved: 100,000
+bulk Delete cost (us): 79,737,990
+single insert cost (us): 80,462,967
+single delete cost (us): 81,572,172
+**** Bulk test passed.
+test count 100000
+cntr assign cost (us): 93,600
+cntr push cost (us): 62,400
+Inserted: 100,000
+bulk inserter2 cost (us): 24,211,242
+ResetName cost (us): 15,795,561
+nModified: 0
+bulk Update cost (us): 60,836,107
+ResetName cost (us): 9,034,015
+nModified: 100,000
+bulk Replace cost (us): 69,682,137
+nRemoved: 100,000
+bulk Delete cost (us): 79,566,390
+single insert cost (us): 80,447,367
+single delete cost (us): 81,540,972
+**** Bulk test passed.
+

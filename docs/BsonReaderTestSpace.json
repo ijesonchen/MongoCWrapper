@@ -1,0 +1,15 @@
+{
+	"mongoAddr"		: "192.168.13.238",
+	"mongoPort"		: 20000,
+	"mongoColl"		: "sid230",
+	"sidModelPath"	: ".\\sidMod",
+	"resPath"		: "."
+}
+
+{
+	"appendDoc"		: "appendDoc1"
+}
+
+{
+	"appendDoc"		: "appendDoc2"
+}

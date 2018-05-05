@@ -45,6 +45,18 @@
     <ClCompile Include="..\..\samples\AccessBase.cpp">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\samples\TestMfcFunc.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\OidTimeAccess.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\TestMongoc.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\samples\MongoLog.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\samples\Teacher.h">
@@ -90,6 +102,18 @@
       <Filter>Test</Filter>
     </ClInclude>
     <ClInclude Include="..\..\samples\Account.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TestMfcFunc.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\OidTimeAccess.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\TestMongoc.h">
+      <Filter>Test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\samples\MongoLog.h">
       <Filter>Test</Filter>
     </ClInclude>
   </ItemGroup>

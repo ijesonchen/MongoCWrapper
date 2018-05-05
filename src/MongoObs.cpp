@@ -108,7 +108,7 @@ namespace MongoClib
 			return false;
 		}
 
-		bson_error_t error;
+		bson_error_t error = {};
 		mongoc_index_opt_t opt;
 		mongoc_index_opt_init(&opt);
 		opt.unique = bUnique;

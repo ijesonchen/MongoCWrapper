@@ -5,6 +5,8 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <iterator>
+#include <tuple>
 #include <bson.h>
 #include <mongoc.h>
 
@@ -15,9 +17,15 @@
 namespace MongoClib
 {
 	//////////////////////////////////////////////////////////////////////////
+	// string conv function
+	std::string Timet2String(time_t tm);
+	std::string U32toString(const std::uint32_t n);
+
+	//////////////////////////////////////////////////////////////////////////
 	// encode / decode functions, UCS2 <-> UTF-8
 	std::string EncUtf8(const std::wstring& strUnicode);
 	std::wstring DecUtf8(const std::string& strUtf8);
+
 
 #ifdef __AFXSTR_H__
 	inline std::string EncUtf8MS(const CString& strUnicode) 
@@ -26,11 +34,19 @@ namespace MongoClib
 		{ return DecUtf8(strUtf8).c_str(); };
 #endif // __AFXSTR_H__
 
+#ifdef _MSC_VER
 	std::string EncAnsi(const std::wstring& strUnicode);
 	std::wstring DecAnsi(const std::string& strAnsi);
 
+	inline std::string Utf8ToAnsi(const std::string& strUtf8)
+		{ return EncAnsi(DecUtf8(strUtf8));	}
+	inline std::string AnsiToUtf8(const std::string& strAnsi)
+		{ return EncUtf8(DecAnsi(strAnsi)); }
+#endif // _MSC_VER
+
 	//////////////////////////////////////////////////////////////////////////
 	// bson parser 
+	bool BsonHasKey(const bson_t* doc, const std::string& key, bool& val);
 	bool BsonKeyIter(const bson_t* doc, const std::string& key, bson_iter_t& ival);
 
 	bool BsonValue(const bson_t* doc, const std::string& key, bool& val);
@@ -38,6 +54,9 @@ namespace MongoClib
 	bool BsonValue(const bson_t* doc, const std::string& key, long long& val);
 	bool BsonValue(const bson_t* doc, const std::string& key, double& val);
 	bool BsonValue(const bson_t* doc, const std::string& key, std::string& val);
+	// try not to differ time_t with int64. 
+	// mongo use int64 to store date-time in milliseconds since the UNIX epoch, NOT time_t
+	bool BsonValueTimet(const bson_t* doc, const std::string& key, time_t& val);
 	bool BsonValueBin(const bson_t* doc, const std::string& key, std::string& val);
 	// sub document val should be destroyed.
 	bool BsonDoc(const bson_t* doc, const std::string& key, bson_t*& val);
@@ -102,11 +121,9 @@ namespace MongoClib
 		bson_t* arr = bson_new();
 		for (auto it : cntr)
 		{
-			std::stringstream ss;
-			ss << ++idx;
-			std::string idxkey(ss.str());
 			std::string idxvalue = transFunc(it);
-			BSON_APPEND_UTF8(arr, idxkey.c_str(), idxvalue.c_str());
+			auto idxstr = U32toString(++idx);
+			BSON_APPEND_UTF8(arr, idxstr.c_str(), idxvalue.c_str());
 		}
 		bool bRet = BSON_APPEND_ARRAY(doc, key.c_str(), arr);
 		bson_destroy(arr);
@@ -120,7 +137,6 @@ namespace MongoClib
 
 		bson_iter_t ival;
 		uint32_t len = 0;
-		unsigned cnt = 0;
 
 		auto inserter = std::back_inserter(cntr);
 
@@ -137,7 +153,6 @@ namespace MongoClib
 					}
 					std::string str = bson_iter_utf8(&ichild, &len);
 					*inserter++ = transFunc(str);
-					++cnt;
 				}
 				return true;
 			}
@@ -145,6 +160,83 @@ namespace MongoClib
 		return false;
 	}
 
+	template<class Container>
+	bool BsonBinContainer(const bson_t* doc, const std::string& key, Container& cntr)
+	{
+		if (!doc) return false;
+
+		bson_iter_t ival;
+
+		auto inserter = std::back_inserter(cntr);
+
+		if (BsonKeyIter(doc, key, ival) && BSON_ITER_HOLDS_ARRAY(&ival))
+		{
+			bson_iter_t ichild;
+			if (bson_iter_recurse(&ival, &ichild))
+			{
+				std::string val;
+				while (bson_iter_next(&ichild))
+				{
+					if (!BSON_ITER_HOLDS_BINARY(&ichild))
+					{
+						return false;
+					}
+
+					bson_subtype_t  subtype;
+					uint32_t        len = 0;
+					const uint8_t*	buf = nullptr;
+					bson_iter_binary(&ichild, &subtype, &len, &buf);
+					if (!buf || !len)
+					{
+						return false;
+					}
+					val.assign((const char*)buf, len);
+
+					*inserter++ = val;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// read json file & convert to bson
+
+	template<class Container>
+	bool ReadJsonFile(const std::string& jsonFileName, Container& cntr, std::string& errMsg)
+	{
+		bson_error_t bsonErr;
+		auto pReader = bson_json_reader_new_from_file(jsonFileName.c_str(), &bsonErr);
+		if (!pReader)
+		{
+			errMsg = bsonErr.message;
+			return false;
+		}
+		shared_ptr <bson_json_reader_t> up(pReader, bson_json_reader_destroy);
+
+		bson_t doc = BSON_INITIALIZER;
+		auto inserter = std::back_inserter(cntr);
+		auto rc = 0;
+		while ((rc = bson_json_reader_read(pReader, &doc, &bsonErr)) > 0)
+		{
+			*inserter++ = doc;
+		}
+
+		if (rc < 0)
+		{
+			errMsg = bsonErr.message;
+			return false;
+		}
+		return true;
+	}
+
+	class AutoBson;
+	std::tuple<std::vector<AutoBson>, std::string>
+		ReadJsonFile(const std::string& jsonFileName);
+
+	std::tuple<AutoBson, std::string> ReadJsonFileFirst(const std::string& jsonFileName);
+	std::tuple<AutoBson, std::string> ReadJsonFileLast(const std::string& jsonFileName);
 } // MongoClib
 
 #endif // MongocHelp_h__

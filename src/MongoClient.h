@@ -14,13 +14,19 @@ namespace MongoClib
 	// !! ONLY TryPopClient & PushClient are THREAD-SAFE
 
 	// init mongo c driver. NOT thread safe. call this in single-threaded phase
-	// locname is used in UNICODE <-> ANSI convention, "" to ignore, but conversion may fail.
 	// unsigned toXXXMS is time-out milliseconds for xxx, <= 0 is for default
 	// default: toConnectMS 10secs, toSelectMS 30secs, toSocketMS mins
 	// remember to create index after init if necessary.
-	int Init(const std::wstring& srv, const std::wstring& db, const std::string& locname,
+	// locname is obsoleted and ignored, because it may affect user's setting.
+	int Init(const std::string& u8srv, const std::string& u8db,
 		int toConnectMS = 0, int toSelectMS = 0, int toSocketMS = 0,
 		unsigned short port = 27017);
+
+	int Init(const std::wstring& srv, const std::wstring& db,
+		int toConnectMS = 0, int toSelectMS = 0, int toSocketMS = 0,
+		unsigned short port = 27017);
+
+	int Init(const std::string& u8srv, unsigned short port, const std::string& u8db);
 	void Cleanup(void);
 
 	const char* GetDbName(void);

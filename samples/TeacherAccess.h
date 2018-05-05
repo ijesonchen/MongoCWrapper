@@ -27,14 +27,20 @@ public:
 	template<typename Container>
 	bool Insert(const Container& cntr);
 
+	template<typename Container>
+	bool Insert2(const Container& cntr);
+
 	bool Update(const std::deque<Teacher>& dqObjects);
 	bool Replace(const std::deque<Teacher>& dqObjects);
 	bool Delete(const std::deque<Teacher>& dqObjects);
+
+	bool DeleteAll(void);
 	// reset all name, test purpose only
 	bool ResetName(void);
 
 	bool CreateIndexs(void);
 	bool CreateIndexsNoUnique(void);
+	bool CreateComplexIndexs(void);
 private:
 	MongoClib::AutoBson BuildBson(const Teacher& obj);
 	bool ParseBson(Teacher& obj, const MongoClib::AutoCursor& cursor);

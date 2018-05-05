@@ -9,16 +9,33 @@
 
 #include "mfcnew.h"
 
+
+//////////////////////////////////////////////////////////////////////////
+// place this in main.app to link with lib
+/*
 #ifdef _MSC_VER
-	#pragma comment(lib, "bson-1.0.lib")
-	#pragma comment(lib, "mongoc-1.0.lib")
+	#ifdef _WIN64 
+		#ifdef _DEBUG
+			#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x64Debug\\bson-1.0.lib")
+			#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x64Debug\\mongoc-1.0.lib")
+		#else
+			#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x64Release\\bson-1.0.lib")		// x64RelWithDebInfo or x64Release
+			#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x64Release\\mongoc-1.0.lib")	// x64RelWithDebInfo or x64Release
+		#endif // _DEBUG
+	#else
+		#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x86Debug\\bson-1.0.lib")
+		#pragma comment(lib, "..\\..\\winlibmongoc\\lib\\x86Debug\\mongoc-1.0.lib")
+	#endif // _WIN64
 #endif // _MSC_VER
+*/
 
 using namespace std;
 
 namespace MongoClib
 {
 	const unsigned MongoTimeoutMillisec = 5000;
+	const int MongoMaxPoolSize = 500;
+	const int MongoMinPoolSize = 100;
 
 //////////////////////////////////////////////////////////////////////////
 // class MongocDrv
@@ -34,7 +51,7 @@ public:
 
 	~MongoClient();
 
-	int MongoInit(const std::wstring& wsrv, const std::wstring& wdb,
+	int MongoInit(const std::string& u8Srv, const std::string& u8db,
 			int toConnectMS = MongoTimeoutMillisec, unsigned short port = 27017,
 			int toSelectMS = 0, int toSocketMS = 0);
 	void Clear();
@@ -72,7 +89,7 @@ MongoClient::~MongoClient()
 	mongoc_cleanup();
 }
 
-int MongoClient::MongoInit(const std::wstring& wsrv, const std::wstring& wdb,
+int MongoClient::MongoInit(const std::string& u8Srv, const std::string& u8db,
 	int toConnectMS /*= MongoTimeoutMillisec*/, unsigned short port /*= 27017*/,
 	int toSelectMS /*= 0*/, int toSocketMS /*= 0*/)
 {
@@ -80,8 +97,7 @@ int MongoClient::MongoInit(const std::wstring& wsrv, const std::wstring& wdb,
 	{
 		return -1;
 	}
-	string u8Srv = EncUtf8(wsrv);
-	string u8db = EncUtf8(wdb);
+	auto wdb = DecUtf8(u8db);
 	if (!u8Srv.length() || !port || !u8db.length())
 	{
 		return -2;
@@ -89,9 +105,14 @@ int MongoClient::MongoInit(const std::wstring& wsrv, const std::wstring& wdb,
 
 	stringstream ss;
 	ss << "mongodb://" << u8Srv << ":" << port
+		<< "/" << u8db
 		<< "?connectTimeoutMS=" << toConnectMS
 		<< "&serverSelectionTimeoutMS=" << toSelectMS
-		<< "&socketTimeoutMS=" << toSocketMS;
+		<< "&socketTimeoutMS=" << toSocketMS
+		<< "&maxPoolSize=" << MongoMaxPoolSize;
+		// minPoolSize since 1.9.0 Deprecated. This option's behavior does not match its name,
+		// and its actual behavior will likely hurt performance.
+//		<< "&minPoolSize=" << MongoMinPoolSize; 
 	string struri = ss.str();
 	AutoUri uri(ss.str().c_str());
 	if (!uri)
@@ -110,9 +131,13 @@ int MongoClient::MongoInit(const std::wstring& wsrv, const std::wstring& wdb,
 	m_pool = pool;
 	
 	// test connection
-	AutoPoolColl collection("fake");
-	AutoBson query;
-	int64_t count = collection.Count(query, 1);
+	long long count = 0;
+	if (true)
+	{
+		AutoPoolColl collection("fake");
+		AutoBson query;
+		count = collection.Count(query, 1);
+	}
 
 	if (count < 0)
 	{
@@ -172,21 +197,31 @@ MongoClient& GetMongoClient(void)
 //////////////////////////////////////////////////////////////////////////
 // functions
 
-// init mongo c driver. not thread safe. to
-// locname is used in UNICODE <-> ANSI convention, "" to ignore, but conversion may fail.
+// init mongo c driver. NOT thread safe. call this in single-threaded phase
 // unsigned toXXXMS is time-out milliseconds for xxx, <= 0 is for default
 // default: toConnectMS 10secs, toSelectMS 30secs, toSocketMS mins
 // remember to create index after init if necessary.
-int Init(const std::wstring& srv, const std::wstring& db, const std::string& locname,
+// locname is obsoleted and ignored, because it may affect user's setting.
+
+int Init(const std::string& u8Srv, const std::string& u8db,
 	int toConnectMS /*= 0*/, int toSelectMS /*= 0*/, int toSocketMS /*= 0*/,
 	unsigned short port /*= 27017*/)
 {
-	if (locname.length())
-	{
-		setlocale(LC_CTYPE, locname.c_str());
-	}
-	
-	return GetMongoClient().MongoInit(srv, db, toConnectMS, port, toSelectMS, toSocketMS);
+	return GetMongoClient().MongoInit(u8Srv, u8db, toConnectMS, port, toSelectMS, toSocketMS);
+}
+
+int Init(const std::wstring& srv, const std::wstring& db,
+	int toConnectMS /*= 0*/, int toSelectMS /*= 0*/, int toSocketMS /*= 0*/,
+	unsigned short port /*= 27017*/)
+{
+	auto u8Srv = EncUtf8(srv);
+	auto u8db = EncUtf8(db);
+	return Init(u8Srv, u8db, toConnectMS, toSelectMS, toSocketMS, port);
+}
+
+int Init(const std::string& u8Srv, unsigned short port, const std::string& u8db)
+{
+	return Init(u8Srv, u8db, 0, 0, 0, port);
 }
 
 void Cleanup(void)
@@ -210,7 +245,7 @@ bool DropDataBase(void)
 	{
 		auto databasedel = [](mongoc_database_t* p) { mongoc_database_destroy(p); };
 		std::unique_ptr<mongoc_database_t, decltype(databasedel)> upDatabase(mongoc_client_get_database(client, GetMongoClient().db()), databasedel);
-		bson_error_t err;
+		bson_error_t err = {};
 		if (!mongoc_database_drop(upDatabase.get(), &err))
 		{
 			return false;
